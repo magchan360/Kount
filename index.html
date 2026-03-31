@@ -71,12 +71,19 @@
         .hidden-element {
             display: none !important;
         }
+
+        .fade-in-text {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body class="min-h-screen p-4 md:p-8 flex flex-col items-center">
     <div class="bg-pattern"></div>
 
-    <!-- 通知エリア -->
     <div id="guild-board" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
     <div class="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-4 gap-6 relative z-10">
@@ -111,7 +118,6 @@
                         </div>
                     </div>
 
-                    <!-- 記録リセットボタン -->
                     <button onclick="resetGlobalRecords()" class="w-full mt-4 py-2 bg-[#2a1a1a] border border-[#a01a1a] text-[10px] text-[#ffaaaa] hover:bg-[#4a1a1a] hover:text-white transition-all uppercase tracking-widest font-black shadow-lg">
                         Purge Hall of Fame
                     </button>
@@ -123,7 +129,9 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                     <span>Slayer's Creed</span>
                 </div>
-                「記録が消えても、磨かれた刃の鋭さは魂に刻まれている。」
+                <div id="slayers-creed-text" class="fade-in-text min-h-[3em]">
+                    「記録が消えても、磨かれた刃の鋭さは魂に刻まれている。」
+                </div>
             </div>
         </div>
 
@@ -175,9 +183,11 @@
                         </div>
                     </button>
                     
-                    <button onclick="resetAndSave()" class="col-span-1 bg-[#3a0a0a] hover:bg-[#6a0a0a] btn-active text-[#ff5555] rounded-sm border-4 border-[#a01a1a] flex flex-col items-center justify-center transition-all shadow-2xl">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="drop-shadow-[0_0_12px_rgba(255,85,85,0.6)]"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a4 4 0 1 1 0 8h-1"/></svg>
-                        <span class="text-sm font-black mt-3 tracking-widest text-[#ffaaaa]">RETREAT</span>
+                    <button id="secondary-btn" onclick="resetAndSave()" class="col-span-1 bg-[#3a0a0a] hover:bg-[#6a0a0a] btn-active text-[#ff5555] rounded-sm border-4 border-[#a01a1a] flex flex-col items-center justify-center transition-all shadow-2xl">
+                        <div id="secondary-btn-content" class="flex flex-col items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="drop-shadow-[0_0_12px_rgba(255,85,85,0.6)]"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a4 4 0 1 1 0 8h-1"/></svg>
+                            <span class="text-sm font-black mt-3 tracking-widest text-[#ffaaaa]">RETREAT</span>
+                        </div>
                     </button>
                 </div>
             </div>
@@ -189,7 +199,7 @@
                 <h2 class="text-xl font-black flex items-center gap-3 text-[#f1c40f] tracking-[0.3em] uppercase drop-shadow-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                     Slayer Log
-                    <span id="history-count" class="ml-3 text-sm font-black bg-[#3a352a] border-2 border-[#f1c40f] px-4 py-1 text-[#ffffff] shadow-md">
+                    <span id="total-slain-count" class="ml-3 text-sm font-black bg-[#3a352a] border-2 border-[#f1c40f] px-4 py-1 text-[#ffffff] shadow-md" title="累計討伐数">
                         0
                     </span>
                 </h2>
@@ -216,12 +226,36 @@
     <script>
         const STORAGE_KEY = 'abyss_slayer_records_v4';
 
+        const creeds = [
+            "「記録が消えても、磨かれた刃の鋭さは魂に刻まれている。」",
+            "「立ち止まるな。奈落は止まった者から飲み込んでいく。」",
+            "「恐怖を抱け。それが生き残るための唯一の防具となる。」",
+            "「一太刀ごとに己の業を斬り捨てよ。」",
+            "「勝利とは、倒した数ではなく、次に踏み出す一歩のことだ。」",
+            "「死線の上でこそ、剣士の真価は輝きを増す。」",
+            "「血の匂いは、生存を証明する唯一の香りだ。」",
+            "「武器が折れれば拳で、拳が砕ければ牙で。それが狩人の誇りだ。」",
+            "「獲物の悲鳴を子守唄に、安らかな眠りなど忘れるがいい。」",
+            "「深淵を覗くとき、深淵もまたお前を獲物として見ている。」",
+            "「強さとは力ではない。何度膝をついても立ち上がる意志のことだ。」",
+            "「名誉は墓標に刻め。今はただ、次の首を狩ることだけを考えろ。」",
+            "「戦場に憐れみはない。あるのは結果と、沈黙だけだ。」",
+            "「刃を研ぐ音は、死神へ送る招待状である。」",
+            "「影の中で生きる者が、光を最も鋭く捉えることができる。」",
+            "「逃げることは恥ではない。だが、逃げたまま終わることは罪だ。」",
+            "「限界を超えた先に、真の境地が待っている。」",
+            "「敵の骸（むくろ）を積み上げ、天に届く階段を築け。」",
+            "「静寂は最悪の予兆。嵐が来る前に、その心拍を鎮めよ。」",
+            "「剣は語らず、ただ真実のみを刻む。」"
+        ];
+
         let count = null;
         let title = "魔物の群れ";
         let history = [];
+        let totalSlain = 0; 
         let startTime = null;
         let lastCountTime = null;
-        let totalSlayingTime = 0; // セッション内の討伐時間の純粋な合計
+        let totalSlayingTime = 0;
 
         let records = {
             session: { fastest: Infinity, slowest: -Infinity },
@@ -231,40 +265,58 @@
         const mainCountEl = document.getElementById('main-count');
         const statusIndicator = document.getElementById('status-indicator');
         const actionBtn = document.getElementById('action-btn');
+        const secondaryBtn = document.getElementById('secondary-btn');
+        const secondaryBtnContent = document.getElementById('secondary-btn-content');
         const btnOverlay = document.getElementById('btn-overlay');
         const btnContent = document.getElementById('btn-content');
         const historyList = document.getElementById('history-list');
-        const historyCountEl = document.getElementById('history-count');
+        const totalSlainEl = document.getElementById('total-slain-count');
         const emptyHistory = document.getElementById('empty-history');
         const appTitleEl = document.getElementById('app-title');
         const titleInput = document.getElementById('title-input');
         const titleContainer = document.getElementById('title-container');
         const titleEditContainer = document.getElementById('title-edit-container');
         const guildBoard = document.getElementById('guild-board');
+        const creedTextEl = document.getElementById('slayers-creed-text');
 
         const sFastestEl = document.getElementById('session-fastest');
         const sSlowestEl = document.getElementById('session-slowest');
         const gFastestEl = document.getElementById('global-fastest');
         const gSlowestEl = document.getElementById('global-slowest');
 
+        function updateCreed() {
+            const randomIndex = Math.floor(Math.random() * creeds.length);
+            creedTextEl.classList.remove('fade-in-text');
+            void creedTextEl.offsetWidth; 
+            creedTextEl.classList.add('fade-in-text');
+            creedTextEl.innerText = creeds[randomIndex];
+        }
+
         function loadData() {
             const saved = localStorage.getItem(STORAGE_KEY);
             if (saved) {
                 const data = JSON.parse(saved);
-                records.global = data.global || { fastest: Infinity, slowest: -Infinity };
+                // nullチェックと初期値の適用
+                records.global = {
+                    fastest: (data.global && typeof data.global.fastest === 'number') ? data.global.fastest : Infinity,
+                    slowest: (data.global && typeof data.global.slowest === 'number') ? data.global.slowest : -Infinity
+                };
                 history = data.history || [];
                 title = data.title || "魔物の群れ";
+                totalSlain = data.totalSlain || 0;
                 appTitleEl.innerText = title;
             }
             updateRecordUI();
             updateUI();
+            updateCreed();
         }
 
         function saveData() {
             localStorage.setItem(STORAGE_KEY, JSON.stringify({
                 global: records.global,
                 history: history,
-                title: title
+                title: title,
+                totalSlain: totalSlain
             }));
         }
 
@@ -313,27 +365,42 @@
         }
 
         function updateUI() {
+            totalSlainEl.innerText = totalSlain;
             if (count === null) {
                 mainCountEl.innerText = '－';
                 mainCountEl.classList.remove('text-[#ffffff]', 'drop-shadow-[0_0_30px_rgba(255,255,255,0.4)]');
                 mainCountEl.classList.add('text-[#2d2d35]');
                 statusIndicator.classList.add('hidden-element');
+                
                 actionBtn.className = 'col-span-3 relative group btn-active transition-all py-10 rounded-sm overflow-hidden border-4 shadow-[0_15px_40px_rgba(0,0,0,0.7)] border-[#55efc4] bg-[#1a4a3a]';
                 btnOverlay.className = 'absolute inset-0 opacity-30 group-hover:opacity-40 transition-opacity bg-[#55efc4]';
                 btnContent.innerHTML = `
                     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#55efc4]"><path d="M14.5 17.5 3 6V3h3l11.5 11.5"/><path d="m13 19 6-6"/><path d="m16 22 5-5"/><circle cx="6" cy="18" r="3"/></svg>
                     <span class="font-black mt-4 text-xl tracking-[0.5em] text-[#55efc4] drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">ENGAGE</span>
                 `;
+
+                secondaryBtn.className = 'col-span-1 bg-[#2a1a0a] hover:bg-[#4a2a0a] btn-active text-[#f1c40f] rounded-sm border-4 border-[#8a7a5e] flex flex-col items-center justify-center transition-all shadow-2xl';
+                secondaryBtnContent.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="drop-shadow-[0_0_12px_rgba(241,196,15,0.4)]"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                    <span class="text-[10px] font-black mt-3 tracking-widest text-[#d4af37]">CLEAR LOG</span>
+                `;
             } else {
                 mainCountEl.innerText = count;
                 mainCountEl.classList.add('text-[#ffffff]', 'drop-shadow-[0_0_30px_rgba(255,255,255,0.4)]');
                 mainCountEl.classList.remove('text-[#2d2d35]');
                 statusIndicator.classList.remove('hidden-element');
+
                 actionBtn.className = 'col-span-3 relative group btn-active transition-all py-10 rounded-sm overflow-hidden border-4 shadow-[0_15px_40px_rgba(0,0,0,0.7)] border-[#f1c40f] bg-[#3a352a]';
                 btnOverlay.className = 'absolute inset-0 opacity-30 group-hover:opacity-40 transition-opacity bg-white';
                 btnContent.innerHTML = `
                     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="text-[#ffffff]"><path d="M14.5 17.5 3 6V3h3l11.5 11.5"/><path d="m13 19 6-6"/><path d="m16 22 5-5"/><circle cx="6" cy="18" r="3"/></svg>
                     <span class="font-black mt-4 text-xl tracking-[0.5em] text-[#ffffff] drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">SLAY</span>
+                `;
+
+                secondaryBtn.className = 'col-span-1 bg-[#3a0a0a] hover:bg-[#6a0a0a] btn-active text-[#ff5555] rounded-sm border-4 border-[#a01a1a] flex flex-col items-center justify-center transition-all shadow-2xl';
+                secondaryBtnContent.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="drop-shadow-[0_0_12px_rgba(255,85,85,0.6)]"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a4 4 0 1 1 0 8h-1"/></svg>
+                    <span class="text-sm font-black mt-3 tracking-widest text-[#ffaaaa]">RETREAT</span>
                 `;
             }
             renderHistory();
@@ -342,18 +409,32 @@
         function handleAction() {
             const now = new Date();
             const timestamp = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            
+            updateCreed(); 
+
             if (count === null) {
                 count = 0; startTime = now; lastCountTime = now; totalSlayingTime = 0;
                 history.unshift({ id: Date.now(), type: 'start', value: '---', elapsed: "遭遇", timestamp });
             } else {
                 const diff = now - lastCountTime;
-                count++; lastCountTime = now;
-                totalSlayingTime += diff; // 討伐時間を累積
+                count++; 
+                totalSlain++; 
+                lastCountTime = now;
+                totalSlayingTime += diff;
 
-                if (diff < records.session.fastest) { records.session.fastest = diff; showGuildNotice('fast', diff); }
+                // セッション記録の更新
+                if (diff < records.session.fastest) records.session.fastest = diff;
                 if (diff > records.session.slowest) records.session.slowest = diff;
-                if (diff < records.global.fastest) records.global.fastest = diff;
-                if (diff > records.global.slowest) records.global.slowest = diff;
+
+                // グローバル記録（全期間）の更新
+                if (diff < records.global.fastest) {
+                    records.global.fastest = diff;
+                    showGuildNotice('fast', diff); // グローバル最速更新時のみ通知
+                }
+                if (diff > records.global.slowest) {
+                    records.global.slowest = diff;
+                }
+
                 history.unshift({ id: Date.now(), type: 'count', value: count, elapsed: `${formatDuration(diff)}`, timestamp });
             }
             saveData();
@@ -362,11 +443,12 @@
         }
 
         function resetAndSave() {
+            updateCreed(); 
+
             if (count !== null) {
                 const now = new Date();
                 const timestamp = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
                 
-                // 撤退ログ：各討伐時間の合計（totalSlayingTime）のみを表示
                 history.unshift({ 
                     id: Date.now(), 
                     type: 'reset', 
@@ -375,16 +457,30 @@
                     timestamp, 
                     isSummary: true 
                 });
+                
+                count = null; 
+                startTime = null; 
+                lastCountTime = null; 
+                totalSlayingTime = 0;
+                records.session = { fastest: Infinity, slowest: -Infinity }; // セッションのみリセット
+            } 
+            else {
+                if (history.length > 0 || totalSlain > 0) {
+                    if (confirm("Slayer Log（討伐記録）および累計討伐数をすべて消去しますか？")) {
+                        history = [];
+                        totalSlain = 0;
+                    } else {
+                        return;
+                    }
+                }
             }
-            count = null; startTime = null; lastCountTime = null; totalSlayingTime = 0;
-            records.session = { fastest: Infinity, slowest: -Infinity };
+            
             saveData();
             updateRecordUI();
             updateUI();
         }
 
         function renderHistory() {
-            historyCountEl.innerText = history.length;
             Array.from(historyList.children).forEach(child => { if (child.id !== 'empty-history') child.remove(); });
             if (history.length === 0) { emptyHistory.classList.remove('hidden-element'); return; }
             emptyHistory.classList.add('hidden-element');
@@ -394,31 +490,37 @@
                 div.className = `border-l-8 p-5 flex items-center justify-between transition-all relative shadow-lg ${
                     item.isSummary ? 'bg-[#4a0a0a] border-[#ff5555]' : item.type === 'start' ? 'bg-[#1a3a1a] border-[#55efc4]' : 'bg-[#2d2d35] border-[#b09b78] hover:bg-[#35353d]'
                 }`;
-                const badge = item.isSummary ? '<span class="text-xs bg-[#ff5555] text-white px-3 py-1 rounded-sm font-black uppercase shadow-lg">帰還</span>' : item.type === 'start' ? '<span class="text-xs bg-[#55efc4] text-[#0a2a1a] px-3 py-1 rounded-sm font-black uppercase shadow-lg">遭遇</span>' : '';
+                const badge = item.isSummary ? '<span class=\"text-xs bg-[#ff5555] text-white px-3 py-1 rounded-sm font-black uppercase shadow-lg\">帰還</span>' : item.type === 'start' ? '<span class=\"text-xs bg-[#55efc4] text-[#0a2a1a] px-3 py-1 rounded-sm font-black uppercase shadow-lg\">遭遇</span>' : '';
                 const titleText = item.isSummary ? '討伐完了' : item.type === 'start' ? '接敵：戦闘開始' : `討伐：${item.value}体目`;
                 const titleColor = item.isSummary ? 'text-[#ffcccc]' : item.type === 'start' ? 'text-[#a2ffd0]' : 'text-[#ffffff]';
                 const valueColor = item.isSummary ? 'text-[#ff5555]' : item.type === 'start' ? 'text-[#55efc4]' : 'text-[#f1c40f]';
 
                 div.innerHTML = `
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-4 mb-3">
-                            <span class="text-sm font-black text-[#ffffff] tracking-widest drop-shadow-md">${item.timestamp}</span>
+                    <div class=\"flex-1 min-w-0\">
+                        <div class=\"flex items-center gap-4 mb-3\">
+                            <span class=\"text-sm font-black text-[#ffffff] tracking-widest drop-shadow-md\">${item.timestamp}</span>
                             ${badge}
                         </div>
-                        <p class="text-lg md:text-xl font-black tracking-widest drop-shadow-sm ${titleColor}">${titleText}</p>
-                        <p class="text-sm text-[#f1c40f] flex items-center gap-2 mt-3 font-serif italic tracking-widest font-black">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        <p class=\"text-lg md:text-xl font-black tracking-widest drop-shadow-sm ${titleColor}\">${titleText}</p>
+                        <p class=\"text-sm text-[#f1c40f] flex items-center gap-2 mt-3 font-serif italic tracking-widest font-black\">
+                            <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><polyline points=\"12 6 12 12 16 14\"/></svg>
                             ${item.elapsed}
                         </p>
                     </div>
-                    <div class="text-3xl font-black ml-4 drop-shadow-[0_4px_8px_rgba(0,0,0,1)] ${valueColor}">${item.value === '---' ? '0' : item.value}</div>
+                    <div class=\"text-3xl font-black ml-4 drop-shadow-[0_4px_8px_rgba(0,0,0,1)] ${valueColor}\">${item.value === '---' ? '0' : item.value}</div>
                 `;
                 historyList.appendChild(div);
             });
         }
 
         function clearHistory() {
-            if (confirm("全ログを抹消しますか？")) { history = []; saveData(); updateUI(); }
+            if (confirm("全ログおよび累計討伐数を抹消しますか？")) { 
+                history = []; 
+                totalSlain = 0;
+                saveData(); 
+                updateUI(); 
+                updateCreed();
+            }
         }
 
         function resetGlobalRecords() {
@@ -428,6 +530,7 @@
                 saveData();
                 updateRecordUI();
                 showGuildNotice('purge');
+                updateCreed();
             }
         }
 
