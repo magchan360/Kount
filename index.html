@@ -622,7 +622,7 @@
                 div.className = `border-l-4 p-3 md:p-4 flex items-center justify-between transition-all relative shadow-lg ${
                     item.isSummary ? 'bg-[#4a0a0a] border-[#ff5555]' : item.type === 'start' ? 'bg-[#1a3a1a] border-[#55efc4]' : 'bg-[#2d2d35] border-[#b09b78] hover:bg-[#35353d]'
                 }`;
-                const badge = item.isSummary ? '<span class=\"text-[10px] bg-[#ff5555] text-white px-2 py-0.5 rounded-sm font-black uppercase\">帰還</span>' : item.type === 'start' ? '<span class=\"text-[10px] bg-[#55efc4] text-[#0a2a1a] px-2 py-0.5 rounded-sm font-black uppercase\">出荷</span>' : '';
+                const badge = item.isSummary ? '<span class=\"text-[10px] bg-[#ff5555] text-white px-2 py-0.5 rounded-sm font-black uppercase\">帰還</span>' : item.type === 'start' ? '<span class=\"text-[10px] bg-[#55efc4] text-[#0a2a1a] px-2 py-0.5 rounded-sm font-black uppercase\">出発</span>' : '';
                 
                 const titleText = item.isSummary ? '討伐完了' : item.type === 'start' ? '討伐開始' : `討伐${item.value}体目`;
                 const titleColor = item.isSummary ? 'text-[#ffcccc]' : item.type === 'start' ? 'text-[#a2ffd0]' : 'text-[#ffffff]';
