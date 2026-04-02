@@ -216,17 +216,30 @@
 
         <!-- 右サイド：ログ -->
         <div class="lg:col-span-1 bg-[#1e1e24] border-2 border-[#8a7a5e] rounded-sm p-6 flex flex-col h-[600px] lg:h-[calc(100vh-100px)] shadow-2xl relative overflow-hidden">
-            <div class="flex items-center justify-between mb-6 border-b-4 border-[#3d382e] pb-6">
-                <h2 class="text-xl font-black flex items-center gap-3 text-[#f1c40f] tracking-[0.3em] uppercase drop-shadow-sm">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                    Slayer Log
-                    <span id="total-slain-count" class="ml-3 text-sm font-black bg-[#3a352a] border-2 border-[#f1c40f] px-4 py-1 text-[#ffffff] shadow-md" title="累計討伐数">
-                        0
-                    </span>
-                </h2>
-                <button onclick="clearHistory()" class="text-[#8a7a5e] hover:text-[#ff5555] transition-colors p-2" title="全記録抹消">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
-                </button>
+            <div class="flex flex-col mb-4 border-b-4 border-[#3d382e] pb-4">
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-xl font-black flex items-center gap-3 text-[#f1c40f] tracking-[0.3em] uppercase drop-shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        Slayer Log
+                        <span id="total-slain-count" class="ml-3 text-sm font-black bg-[#3a352a] border-2 border-[#f1c40f] px-4 py-1 text-[#ffffff] shadow-md" title="累計討伐数">
+                            0
+                        </span>
+                    </h2>
+                    <button onclick="clearHistory()" class="text-[#8a7a5e] hover:text-[#ff5555] transition-colors p-2" title="全記録抹消">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                    </button>
+                </div>
+                <!-- 全体統計表示エリア -->
+                <div class="flex flex-col gap-1 px-1">
+                    <div class="flex justify-between items-center text-[10px] tracking-widest font-black uppercase text-[#8a7a5e]">
+                        <span>Session Total:</span>
+                        <span id="session-total-time" class="text-[#f0ead6]">00:00:00</span>
+                    </div>
+                    <div class="flex justify-between items-center text-[10px] tracking-widest font-black uppercase text-[#8a7a5e]">
+                        <span>Avg Slay Time:</span>
+                        <span id="session-avg-time" class="text-[#f1c40f]">00:00:00</span>
+                    </div>
+                </div>
             </div>
 
             <div id="history-list" class="flex-1 overflow-y-auto space-y-6 pr-2 custom-scrollbar">
@@ -275,7 +288,8 @@
         let history = [];
         let totalSlain = 0; 
         let lastCountTime = null;
-        let totalSlayingTime = 0;
+        let totalSlayingTime = 0; // 現在のバトルの合計
+        let sessionTotalTime = 0; // 全バトルの累計合計時間
 
         let records = {
             session: { fastest: Infinity, slowest: -Infinity },
@@ -304,6 +318,9 @@
         const gFastestEl = document.getElementById('global-fastest');
         const gSlowestEl = document.getElementById('global-slowest');
 
+        const sessionTotalTimeEl = document.getElementById('session-total-time');
+        const sessionAvgTimeEl = document.getElementById('session-avg-time');
+
         // Wireframe Rendering Engine
         const canvas = document.getElementById('dungeon-canvas');
         const ctx = canvas.getContext('2d');
@@ -324,7 +341,6 @@
             const centerX = w / 2;
             const centerY = h / 2;
             
-            // Dynamic color shift during combat
             let opacity = 0.4 + Math.sin(frame * 0.05) * 0.1;
             let shakeX = 0;
             let shakeY = 0;
@@ -332,7 +348,6 @@
             if (count !== null) {
                 ctx.strokeStyle = `rgba(255, 80, 80, ${opacity})`;
                 ctx.lineWidth = 1.5;
-                // Add subtle combat screen shake
                 shakeX = (Math.random() - 0.5) * 2;
                 shakeY = (Math.random() - 0.5) * 2;
             } else {
@@ -340,23 +355,17 @@
                 ctx.lineWidth = 1;
             }
 
-            // Wizardry 3D Perspective constants
-            // Perspective based on distance (depth levels 0 to 4)
             const depths = [1, 0.6, 0.36, 0.216, 0.13]; 
             
             ctx.save();
             ctx.translate(shakeX, shakeY);
             ctx.beginPath();
             
-            // Draw lateral walls lines (perspective convergence)
-            // Ceiling edges
             ctx.moveTo(0, 0); ctx.lineTo(centerX, centerY);
             ctx.moveTo(w, 0); ctx.lineTo(centerX, centerY);
-            // Floor edges
             ctx.moveTo(0, h); ctx.lineTo(centerX, centerY);
             ctx.moveTo(w, h); ctx.lineTo(centerX, centerY);
 
-            // Draw horizontal dividers (floor/ceiling/depth)
             depths.forEach((d) => {
                 const dw = w * d;
                 const dh = h * d;
@@ -365,24 +374,18 @@
                 const top = centerY - dh / 2;
                 const bottom = centerY + dh / 2;
                 
-                // Frontal rects (corridor frames)
                 ctx.moveTo(left, top);
                 ctx.lineTo(right, top);
                 ctx.lineTo(right, bottom);
                 ctx.lineTo(left, bottom);
                 ctx.lineTo(left, top);
                 
-                // Horizontal floor grid lines for the base depth
                 if (d === 1) {
                     for (let i = 1; i < 5; i++) {
                         const step = w * 0.1 * i;
-                        // Left floor lines
                         ctx.moveTo(centerX - step, h); ctx.lineTo(centerX, centerY);
-                        // Right floor lines
                         ctx.moveTo(centerX + step, h); ctx.lineTo(centerX, centerY);
-                        // Left ceiling lines
                         ctx.moveTo(centerX - step, 0); ctx.lineTo(centerX, centerY);
-                        // Right ceiling lines
                         ctx.moveTo(centerX + step, 0); ctx.lineTo(centerX, centerY);
                     }
                 }
@@ -420,6 +423,7 @@
                 history = data.history || [];
                 title = data.title || "魔物の群れ";
                 totalSlain = data.totalSlain || 0;
+                sessionTotalTime = data.sessionTotalTime || 0;
                 appTitleEl.innerText = title;
             }
             updateRecordUI();
@@ -432,7 +436,8 @@
                 global: records.global,
                 history: history,
                 title: title,
-                totalSlain: totalSlain
+                totalSlain: totalSlain,
+                sessionTotalTime: sessionTotalTime
             }));
         }
 
@@ -482,6 +487,12 @@
 
         function updateUI() {
             totalSlainEl.innerText = totalSlain;
+            
+            // 全体統計の表示更新
+            sessionTotalTimeEl.innerText = formatDuration(sessionTotalTime);
+            const avgTime = totalSlain > 0 ? (sessionTotalTime / totalSlain) : 0;
+            sessionAvgTimeEl.innerText = formatDuration(avgTime);
+
             if (count === null) {
                 mainCountEl.innerText = '－';
                 mainCountEl.classList.remove('text-[#ffffff]', 'drop-shadow-[0_0_30px_rgba(255,255,255,0.4)]');
@@ -564,6 +575,13 @@
                 const now = new Date();
                 const timestamp = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
                 
+                // バトルの最終ラグを加算
+                const finalDiff = now - lastCountTime;
+                totalSlayingTime += finalDiff;
+                
+                // セッション累計時間に加算
+                sessionTotalTime += totalSlayingTime;
+
                 history.unshift({ 
                     id: Date.now(), 
                     type: 'reset', 
@@ -579,9 +597,10 @@
             } 
             else {
                 if (history.length > 0 || totalSlain > 0) {
-                    if (confirm("Slayer Log（討伐記録）および累計討伐数をすべて消去しますか？")) {
+                    if (confirm("Slayer Log（討伐記録）および累計討伐数、セッション統計をすべて消去しますか？")) {
                         history = [];
                         totalSlain = 0;
+                        sessionTotalTime = 0;
                     } else {
                         return;
                     }
@@ -628,9 +647,10 @@
         }
 
         function clearHistory() {
-            if (confirm("全ログおよび累計討伐数を抹消しますか？")) { 
+            if (confirm("全ログ、累計討伐数、およびセッション統計を抹消しますか？")) { 
                 history = []; 
                 totalSlain = 0;
+                sessionTotalTime = 0;
                 saveData(); 
                 updateUI(); 
                 updateCreed();
