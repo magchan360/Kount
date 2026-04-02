@@ -542,7 +542,7 @@
             if (count === null) {
                 records.session = { fastest: Infinity, slowest: -Infinity };
                 count = 0; lastCountTime = now; totalSlayingTime = 0;
-                history.unshift({ id: Date.now(), type: 'start', value: '---', elapsed: "遭遇", timestamp });
+                history.unshift({ id: Date.now(), type: 'start', value: '---', elapsed: "出発", timestamp });
             } else {
                 const diff = now - lastCountTime;
                 count++; 
@@ -622,9 +622,9 @@
                 div.className = `border-l-4 p-3 md:p-4 flex items-center justify-between transition-all relative shadow-lg ${
                     item.isSummary ? 'bg-[#4a0a0a] border-[#ff5555]' : item.type === 'start' ? 'bg-[#1a3a1a] border-[#55efc4]' : 'bg-[#2d2d35] border-[#b09b78] hover:bg-[#35353d]'
                 }`;
-                const badge = item.isSummary ? '<span class=\"text-[10px] bg-[#ff5555] text-white px-2 py-0.5 rounded-sm font-black uppercase\">帰還</span>' : item.type === 'start' ? '<span class=\"text-[10px] bg-[#55efc4] text-[#0a2a1a] px-2 py-0.5 rounded-sm font-black uppercase\">遭遇</span>' : '';
+                const badge = item.isSummary ? '<span class=\"text-[10px] bg-[#ff5555] text-white px-2 py-0.5 rounded-sm font-black uppercase\">帰還</span>' : item.type === 'start' ? '<span class=\"text-[10px] bg-[#55efc4] text-[#0a2a1a] px-2 py-0.5 rounded-sm font-black uppercase\">出荷</span>' : '';
                 
-                const titleText = item.isSummary ? '討伐完了' : item.type === 'start' ? '戦闘開始' : `討伐${item.value}体目`;
+                const titleText = item.isSummary ? '討伐完了' : item.type === 'start' ? '討伐開始' : `討伐${item.value}体目`;
                 const titleColor = item.isSummary ? 'text-[#ffcccc]' : item.type === 'start' ? 'text-[#a2ffd0]' : 'text-[#ffffff]';
                 const valueColor = item.isSummary ? 'text-[#ff5555]' : item.type === 'start' ? 'text-[#55efc4]' : 'text-[#f1c40f]';
 
