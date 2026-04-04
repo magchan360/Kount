@@ -24,15 +24,31 @@
             z-index: -1;
         }
 
-        /* Wireframe Canvas Styling */
+
+        /* 背景画像コンテナのスタイリング */
+        .dungeon-bg-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;  /* 0以上に設定（背景色の前に出す） */
+            object-fit: cover;
+            filter: brightness(0.65) contrast(1.1); /* 輝度を下げ、コントラストを少し上げる */
+            opacity: 0.8;
+        }
+
+        /* キャンバスを少し透過させて画像を見せる */
         #dungeon-canvas {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: 0;
+            z-index: 1;
+            mix-blend-mode: screen; /* ワイヤーフレームを光らせて合成 */
         }
+
 
         .custom-scrollbar::-webkit-scrollbar {
             width: 8px;
@@ -91,9 +107,10 @@
         }
 
         .glass-panel {
-            background-color: rgba(10, 10, 12, 0.7);
-            backdrop-filter: blur(2px);
+            background-color: rgba(10, 10, 12, 0.6); /* 少し透明度を上げる */
+            /* backdrop-filter: blur(1px);  ぼかしを強めて文字を浮き立たせる */
         }
+
     </style>
 </head>
 <body class="min-h-screen p-4 md:p-8 flex flex-col items-center">
@@ -104,55 +121,87 @@
     <div class="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-4 gap-6 relative z-10">
         
         <!-- 左サイド：ステータスパネル -->
+
+        <!-- 左サイド：ステータスパネル -->
         <div class="lg:col-span-1 flex flex-col gap-6">
-            <div class="bg-[#1a1a1f] border-2 border-[#8a7a5e] p-4 shadow-xl">
-                <h3 class="text-[#d4af37] text-xs font-black tracking-[0.3em] uppercase mb-4 border-b border-[#4a463d] pb-2">Hunting Records</h3>
+            <div class="bg-[#1a1a1f] border-2 border-[#8a7a5e] p-5 shadow-xl">
+                <!-- 「征伐の軌跡」を大きく強調 -->
+                <h3 class="text-[#d4af37] text-lg md:text-xl font-black tracking-[0.4em] uppercase mb-6 border-b-2 border-[#8a7a5e] pb-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+                    征伐の軌跡
+                </h3>
                 
-                <div class="space-y-4">
+                <div class="space-y-5">
                     <div>
-                        <p class="text-[10px] text-[#8a7a5e] uppercase tracking-widest mb-1">Session Performance</p>
-                        <div class="flex justify-between items-end">
-                            <span class="text-xs text-[#f0ead6]">Peak Efficiency:</span>
-                            <span id="session-fastest" class="text-sm font-black text-[#55efc4]">00:00:00</span>
+                        <p class="text-sm font-black uppercase tracking-[0.3em] mb-3 text-[#f1c40f] drop-shadow-[0_0_5px_rgba(241,196,15,0.3)]">現在の記録</p>
+                        <div class="flex justify-between items-end mb-1">
+                            <span class="text-xs text-[#f0ead6] opacity-90">最短討伐:</span>
+                            <span id="session-fastest" class="text-base font-black text-[#55efc4] leading-none">00:00:00</span>
                         </div>
                         <div class="flex justify-between items-end">
-                            <span class="text-xs text-[#f0ead6]">Longest Duel:</span>
-                            <span id="session-slowest" class="text-sm font-black text-[#ff7675]">00:00:00</span>
-                        </div>
-                    </div>
-
-                    <div class="pt-4 border-t border-[#4a463d]">
-                        <p class="text-[10px] text-[#d4af37] uppercase tracking-widest mb-1">Hall of Fame</p>
-                        <div class="flex justify-between items-end">
-                            <span class="text-xs text-[#f0ead6]">All-Time Fastest:</span>
-                            <span id="global-fastest" class="text-sm font-black text-[#f1c40f]">00:00:00</span>
-                        </div>
-                        <div class="flex justify-between items-end">
-                            <span class="text-xs text-[#f0ead6]">All-Time Epic:</span>
-                            <span id="global-slowest" class="text-sm font-black text-[#d4af37]">00:00:00</span>
+                            <span class="text-xs text-[#f0ead6] opacity-90">最長討伐:</span>
+                            <span id="session-slowest" class="text-base font-black text-[#ff7675] leading-none">00:00:00</span>
                         </div>
                     </div>
 
-                    <button onclick="resetGlobalRecords()" class="w-full mt-4 py-2 bg-[#2a1a1a] border border-[#a01a1a] text-[10px] text-[#ffaaaa] hover:bg-[#4a1a1a] hover:text-white transition-all uppercase tracking-widest font-black shadow-lg">
-                        Purge Hall of Fame
+
+
+                    <div class="pt-6 border-t-2 border-[#5c5443]">
+                        <!-- 「歴戦の断章」を大きく、かつ神々しく強調 -->
+                        <p class="text-sm font-black uppercase tracking-[0.3em] mb-3 text-[#f1c40f] drop-shadow-[0_0_5px_rgba(241,196,15,0.3)]">
+                            歴戦の断章
+                        </p>
+                        <div class="flex justify-between items-end mb-1">
+                            <span class="text-xs text-[#f0ead6] opacity-90">歴代最高速:</span>
+                            <span id="global-fastest" class="text-base font-black text-[#f1c40f] leading-none">00:00:00</span>
+                        </div>
+                        <div class="flex justify-between items-end">
+                            <span class="text-xs text-[#f0ead6] opacity-90">歴代最長期戦:</span>
+                            <span id="global-slowest" class="text-base font-black text-[#d4af37] leading-none">00:00:00</span>
+                        </div>
+                    </div>
+
+                    <button onclick="resetGlobalRecords()" 
+                        class="w-full mt-4 py-3 bg-[#2a1a1a] border-2 border-[#a01a1a] text-xs md:text-sm text-[#ffaaaa] hover:bg-[#631919] hover:text-white hover:border-[#ff4d4d] transition-all uppercase tracking-[0.3em] font-black shadow-[0_0_15px_rgba(160,26,26,0.3)] group">
+                        <!-- ほんの少しだけアイコン（ゴミ箱や×印）的なニュアンスを添えても映えます -->
+                        <span class="group-hover:scale-110 transition-transform inline-block">
+                            全記録を灰燼に帰す
+                        </span>
                     </button>
+
+
+
                 </div>
             </div>
 
-            <div class="bg-[#25252b] border-2 border-[#5c5443] p-4 flex flex-col gap-3 text-[#f0ead6] text-xs font-bold italic tracking-wider leading-relaxed shadow-xl">
-                <div class="flex items-center gap-2 text-[#d4af37]">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                    <span>Slayer's Creed</span>
+
+            <!-- Slayer's Creed (Font Size Increased) -->
+            <div class="bg-[#25252b] border-2 border-[#5c5443] p-6 flex flex-col gap-4 text-[#f0ead6] shadow-xl">
+                <!-- タイトル部分を強調 -->
+                <div class="flex items-center gap-3 text-[#d4af37] border-b border-[#5c5443] pb-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    <!-- text-xs(12px) から text-lg(18px) または text-xl(20px) へ変更 -->
+                    <span class="text-lg md:text-xl font-black uppercase tracking-[0.3em] drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
+                        討伐者の遺訓
+                    </span>
                 </div>
-                <div id="slayers-creed-text" class="fade-in-text min-h-[3em]">
+                
+                <!-- 格言テキスト -->
+                <div id="slayers-creed-text" class="fade-in-text min-h-[4em] text-base md:text-lg font-bold italic tracking-wider leading-relaxed text-[#f0ead6] pt-2">
                     「記録が消えても、磨かれた刃の鋭さは魂に刻まれている。」
                 </div>
             </div>
+
         </div>
+
+
+
 
         <!-- 中央：メインインターフェース -->
         <div class="lg:col-span-2 flex flex-col gap-6">
             <div class="border-2 border-[#8a7a5e] rounded-sm p-8 shadow-[0_0_50px_rgba(0,0,0,1)] relative overflow-hidden group bg-[#000]">
+                <img src="image_kunoichi.png" alt="Kunoichi Background" class="dungeon-bg-image">
+            
+            
                 <!-- Dungeon Wireframe Background -->
                 <canvas id="dungeon-canvas"></canvas>
 
@@ -185,13 +234,15 @@
                     <div class="relative mb-12 flex flex-col items-center">
                         <div class="absolute -top-8 text-xs tracking-[0.4em] text-[#d4af37] uppercase font-black drop-shadow-md">Kill Count</div>
                         <div id="main-count" class="text-[120px] md:text-[160px] font-black tabular-nums select-none leading-none transition-all duration-700 text-[#1a1a1f] count-display">
-                            －
+                            　
                         </div>
-                        <div id="status-indicator" class="hidden-element mt-4 flex items-center justify-center gap-4 text-[#ff5555] font-black text-sm tracking-[0.4em] uppercase animate-pulse-abyss drop-shadow-lg">
-                            <div class="w-2 h-2 bg-[#ff5555] rounded-full shadow-[0_0_10px_#ff5555]"></div>
-                            <span>In Combat</span>
-                            <div class="w-2 h-2 bg-[#ff5555] rounded-full shadow-[0_0_10px_#ff5555]"></div>
+
+                        <div id="status-indicator" class="hidden-element mt-8 flex items-center justify-center gap-6 text-[#ff5555] font-black text-2xl md:text-3xl tracking-[0.5em] uppercase animate-pulse-abyss drop-shadow-[0_0_15px_rgba(255,85,85,0.8)]">
+                            <div class="w-4 h-4 bg-[#ff5555] rounded-full shadow-[0_0_20px_#ff5555]"></div>
+                            <span>カウント記録中</span>
+                            <div class="w-4 h-4 bg-[#ff5555] rounded-full shadow-[0_0_20px_#ff5555]"></div>
                         </div>
+
                     </div>
 
                     <div class="grid grid-cols-4 gap-4 w-full max-w-md mx-auto relative">
@@ -199,7 +250,7 @@
                             <div class="absolute inset-0 opacity-20 group-hover:opacity-30 transition-opacity bg-[#55efc4]" id="btn-overlay"></div>
                             <div class="flex flex-col items-center relative z-10" id="btn-content">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#55efc4]"><path d="M14.5 17.5 3 6V3h3l11.5 11.5"/><path d="m13 19 6-6"/><path d="m16 22 5-5"/><circle cx="6" cy="18" r="3"/></svg>
-                                <span class="font-black mt-2 text-lg tracking-[0.5em] text-[#55efc4] drop-shadow-[0_2px_8px_rgba(0,0,0,1)]">ENGAGE</span>
+                                <span class="font-black mt-2 text-lg tracking-[0.5em] text-[#55efc4] drop-shadow-[0_2px_8px_rgba(0,0,0,1)]">討伐開始</span>
                             </div>
                         </button>
                         
@@ -220,24 +271,21 @@
                 <div class="flex items-center justify-between mb-2">
                     <h2 class="text-xl font-black flex items-center gap-3 text-[#f1c40f] tracking-[0.3em] uppercase drop-shadow-sm">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                        Slayer Log
+                        討伐記録
                         <span id="total-slain-count" class="ml-3 text-sm font-black bg-[#3a352a] border-2 border-[#f1c40f] px-4 py-1 text-[#ffffff] shadow-md" title="累計討伐数">
                             0
                         </span>
                     </h2>
-                    <button onclick="clearHistory()" class="text-[#8a7a5e] hover:text-[#ff5555] transition-colors p-2" title="全記録抹消">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
-                    </button>
                 </div>
                 <!-- 全体統計表示エリア -->
                 <div class="flex flex-col gap-1 px-1">
-                    <div class="flex justify-between items-center text-[10px] tracking-widest font-black uppercase text-[#8a7a5e]">
-                        <span>Session Total:</span>
-                        <span id="session-total-time" class="text-[#f0ead6]">00:00:00</span>
+                    <div class="flex justify-between items-end tracking-widest font-black uppercase text-[#8a7a5e]">
+                        <span class="text-xs">Session Total:</span>
+                        <span id="session-total-time" class="text-sm font-black text-[#f0ead6]">00:00:00</span>
                     </div>
-                    <div class="flex justify-between items-center text-[10px] tracking-widest font-black uppercase text-[#8a7a5e]">
-                        <span>Avg Slay Time:</span>
-                        <span id="session-avg-time" class="text-[#f1c40f]">00:00:00</span>
+                    <div class="flex justify-between items-end tracking-widest font-black uppercase text-[#8a7a5e]">
+                        <span class="text-xs">Avg Slay Time:</span>
+                        <span id="session-avg-time" class="text-sm font-black text-[#f1c40f]">00:00:00</span>
                     </div>
                 </div>
             </div>
@@ -251,7 +299,7 @@
             </div>
             
             <div class="mt-8 pt-6 border-t-4 border-[#3d382e] text-xs text-[#d4af37] text-center tracking-[0.4em] uppercase font-black bg-gradient-to-b from-transparent to-[#00000044] pb-2">
-                Blood for honor, Ash for the fallen.
+                <div>”リスク”を味わい尽くせ</div>
             </div>
         </div>
 
@@ -261,26 +309,121 @@
         const STORAGE_KEY = 'abyss_slayer_records_v4';
 
         const creeds = [
-            "「記録が消えても、磨かれた刃の鋭さは魂に刻まれている。」",
-            "「立ち止まるな。奈落は止まった者から飲み込んでいく。」",
-            "「恐怖を抱け。それが生き残るための唯一の防具となる。」",
-            "「一太刀ごとに己の業を斬り捨てよ。」",
-            "「勝利とは、倒した数ではなく、次に踏み出す一歩のことだ。」",
-            "「死線の上でこそ、剣士の真価は輝きを増す。」",
-            "「血の匂いは、生存を証明する唯一の香りだ。」",
-            "「武器が折れれば拳で、拳が砕ければ牙で. それが狩人の誇りだ。」",
-            "「獲物の悲鳴を子守唄に、安らかな眠りなど忘れるがいい。」",
-            "「深淵を覗くとき、深淵もまたお前を獲物として見ている。」",
-            "「強さとは力ではない。何度膝をついても立ち上がる意志のことだ。」",
-            "「名誉は墓標に刻め。今はただ、次の首を狩ることだけを考えろ。」",
-            "「戦場に憐れみはない。あるのは結果と、沈黙だけだ。」",
-            "「刃を研ぐ音は、死神へ送る招待状である。」",
-            "「影の中で生きる者が、光を最も鋭く捉えることができる。」",
-            "「逃げることは恥ではない。だが、逃げたまま終わることは罪だ。」",
-            "「限界を超えた先に、真の境地が待っている。」",
-            "「敵の骸（むくろ）を積み上げ、天に届く階段を築け。」",
-            "「静寂は最悪の予兆。嵐が来る前に、その心拍を鎮めよ。」",
-            "「剣は語らず、ただ真実のみを刻む。」"
+            // --- オリジナルメッセージ ---      
+            "記録が消えても、磨かれた刃の鋭さは魂に刻まれている。",
+            "立ち止まるな。奈落は止まった者から飲み込んでいく。",
+            "恐怖を抱け。それが生き残るための唯一の防具となる。",
+            "一太刀ごとに己の業を斬り捨てよ。",
+            "勝利とは、倒した数ではなく、次に踏み出す一歩のことだ。",
+            "死線の上でこそ、剣士の真価は輝きを増す。",
+            "血の匂いは、生存を証明する唯一の香りだ。",
+            "武器が折れれば拳で、拳が砕ければ牙で. それが狩人の誇りだ。",
+            "獲物の悲鳴を子守唄に、安らかな眠りなど忘れるがいい。",
+            "深淵を覗くとき、深淵もまたお前を獲物として見ている。",
+            "強さとは力ではない。何度膝をついても立ち上がる意志のことだ。",
+            "名誉は墓標に刻め。今はただ、次の首を狩ることだけを考えろ。",
+            "ダンジョンに憐れみはない。あるのは結果と、沈黙だけだ。",
+            "刃を研ぐ音は、死神へ送る招待状である。",
+            "影の中で生きる者が、光を最も鋭く捉えることができる。",
+            "逃げることは恥ではない。だが、逃げたまま終わることは罪だ。",
+            "限界を超えた先に、真の境地が待っている。",
+            "敵の骸（むくろ）を積み上げ、天に届く階段を築け。",
+            "静寂は最悪の予兆。嵐が来る前に、その心拍を鎮めよ。",
+            "剣は語らず、ただ真実のみを刻む。",
+
+            // --- 追加メッセージ ---      
+            // --- 闘争と本能 ---
+            "肉を切らせて、魂を断て。",
+            "生存とは、他者の命を奪うことの言い換えに過ぎない。",
+            "理性を捨てろ。ダンジョンでは獣の直感こそが正解を導く。",
+            "飢えを忘れるな。満たされた狩人は真っ先に死ぬ。",
+            "痛みは生きている証、痺れは死への誘い。",
+            "咆哮はいらぬ。ただ一撃で沈めれば事足りる。",
+            "返り血は、戦士が纏うべき唯一の礼装だ。",
+            "死を恐れるな。死に損なうことを恐れよ。",
+            "狩るか狩られるか。この世にはその二種類しか存在しない。",
+            "獲物が大きいほど、崩れ落ちる時の音は心地よい。",
+
+            // --- 武器と鍛錬 ---
+            "剣は身体の延長ではない。魂の具現である。",
+            "研ぎ澄まされた刃は、迷いさえも切り裂く。",
+            "一振りに万感の想いを込めよ。さもなくば鉄の棒に過ぎぬ。",
+            "守るための盾は捨てろ。攻めるための盾を持て。",
+            "鋼は嘘をつかない。裏切るのはいつも人間の心だ。",
+            "振るわれぬ剣は、錆びた釘と同じだ。",
+            "刃の欠けは、戦士の記憶そのものである。",
+            "最良の武器は、絶望の淵で見出した執念だ。",
+            "一撃で殺せぬのなら、千回振るえばいい。",
+
+            // --- 深淵と闇 ---
+            "暗闇を愛せ。光は敵に位置を教えるだけだ。",
+            "影は裏切らない。常に汝の足元に寄り添っている。",
+            "深淵の底には、神も仏もいやしない。あるのは己だけだ。",
+            "夜が深いのではない。お前の目が光を拒んでいるのだ。",
+            "絶望を食らい、希望を毒として吐き出せ。",
+            "地獄が満員なら、ここに新たな地獄を作ればいい。",
+            "呪いさえも力に変えろ。聖者の祈りより役に立つ。",
+            "闇を知らぬ者に、真の光は斬れない。",
+            "冥府への道連れは多いほうが賑やかで良い。",
+            "己の中の怪物を飼い慣らせ。喰われる前に。",
+
+            // --- 意志と誇り ---
+            "跪いて生きるより、立ち上がって死ぬことを選べ。",
+            "伝説とは、生き残った臆病者が語る物語に過ぎない。",
+            "過去を振り返るな。首を落とした敵が笑っているぞ。",
+            "信念なき力は暴虐、力なき信念は無能だ。",
+            "道がないなら、死体の山で道を作れ。",
+            "誇りだけで腹は膨らまないが、心は枯れない。",
+            "運命を呪う暇があるなら、運命の喉元を掻き切れ。",
+            "他人の物差しで死ぬな。自分の意志で地獄へ行け。",
+            "英雄とは、最も長く絶望に耐えた者の別名だ。",
+            "名もなき戦士として死ね。名は風が運んでいく。",
+
+            // --- 非情な現実 ---
+            "奇跡を待つな。それは死体の山の上にしか現れない。",
+            "慈悲は強者の特権。弱者の慈悲は自殺行為だ。",
+            "神に祈るな。神が助けてくれるなら、お前はここにいない。",
+            "裏切りは期待の裏返し。最初から何も信じるな。",
+            "涙で血は洗えない。洗えるのは新たな血だけだ。",
+            "約束は墓場まで持っていけ。生きてる間は重荷になる。",
+            "善悪に意味はない。ただ、剣の長さが届くかどうかが問題だ。",
+            "明日の太陽が見たいなら、今目の前の闇を斬れ。",
+            "後悔は死んでからすればいい。今はまだ息をしている。",
+
+            // --- 狩人の知恵 ---
+            "獲物の動きを追うな。獲物の思考を先回りせよ。",
+            "完璧な計画は、最初の衝突で瓦解する。",
+            "敵が笑っている時が、最大の好機である。",
+            "足跡は隠せ。だが自分の来た道は忘れるな。",
+            "静寂は、死が呼吸を整えている音だ。",
+            "逃げ道を用意しろ。それは臆病ではなく、再戦の誓いだ。",
+            "獲物が油断するのは、勝利を確信した瞬間だ。",
+            "相手を殺すのに、高尚な理由は必要ない。",
+            "罠にかかったのではない。お前が罠の一部になったのだ。",
+
+            // --- 覚悟と終焉 ---
+            "今日が死ぬのに良き日かどうかは、戦い終えるまで分からぬ。",
+            "終焉は始まりに過ぎない。血塗られた輪廻の幕開けだ。",
+            "骸骨に服を着せても、中身は空っぽだ。お前はどうだ？",
+            "一度死んだつもりで戦え。二度目は本当に死ぬだけだ。",
+            "地獄の門番に挨拶を済ませておけ。すぐ会うことになる。",
+            "最期に笑うのは、最も多くを捨てた者だ。",
+            "安らかな死など、戦士への冒涜だ。",
+            "墓標はいらない。この荒野がお前の寝床だ。",
+            "灰は灰に、塵は塵に。そして魂は刃に。",
+            "さらばだ。次に会う時は、地獄の底で酒を酌み交わそう。",
+
+            // --- 抽象と真理 ---
+            "世界は残酷だ。だからこそ、一瞬の火花が美しい。",
+            "均衡を保つな。均衡を破壊する者こそが支配者だ。",
+            "真実は常に、返り血の向こう側に透けて見える。",
+            "時間は命の削りカスだ。無駄にするな。",
+            "強者とは、孤独に耐える術を知っている者のことだ。",
+            "言葉を信じるな。筋肉と鉄の軋みだけを信じろ。",
+            "夢を見るな。現実が寝首を掻きに来るぞ。",
+            "自由とは、誰にも縛られずに死ねる権利のことだ。",
+            "勝利の味は常に鉄の味がする。",
+            "冒険者よ、汝の歩みの後に、道が生まれる。"
         ];
 
         let count = null;
@@ -494,7 +637,7 @@
             sessionAvgTimeEl.innerText = formatDuration(avgTime);
 
             if (count === null) {
-                mainCountEl.innerText = '－';
+                mainCountEl.innerText = '　';
                 mainCountEl.classList.remove('text-[#ffffff]', 'drop-shadow-[0_0_30px_rgba(255,255,255,0.4)]');
                 mainCountEl.classList.add('text-[#1a1a1f]');
                 statusIndicator.classList.add('hidden-element');
@@ -503,14 +646,23 @@
                 btnOverlay.className = 'absolute inset-0 opacity-20 group-hover:opacity-30 transition-opacity bg-[#55efc4]';
                 btnContent.innerHTML = `
                     <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#55efc4]"><path d="M14.5 17.5 3 6V3h3l11.5 11.5"/><path d="m13 19 6-6"/><path d="m16 22 5-5"/><circle cx="6" cy="18" r="3"/></svg>
-                    <span class="font-black mt-2 text-lg tracking-[0.5em] text-[#55efc4] drop-shadow-[0_2px_8px_rgba(0,0,0,1)]">ENGAGE</span>
+                    <span class="font-black mt-2 text-lg tracking-[0.5em] text-[#55efc4] drop-shadow-[0_2px_8px_rgba(0,0,0,1)]">討伐開始</span>
                 `;
 
+                // --- updateUI() 関数の中の count === null のブロック内 ---
                 secondaryBtn.className = 'col-span-1 bg-[#2a1a0a] hover:bg-[#4a2a0a] btn-active text-[#f1c40f] rounded-sm border-2 border-[#8a7a5e] flex flex-col items-center justify-center transition-all shadow-2xl';
                 secondaryBtnContent.innerHTML = `
                     <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="drop-shadow-[0_0_10px_rgba(241,196,15,0.4)]"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-                    <span class="text-[9px] font-black mt-2 tracking-widest text-[#d4af37]">CLEAR LOG</span>
+                    <span class="text-lg font-black mt-2 tracking-[0.3em] text-[#d4af37]">記録消去</span>
                 `;
+
+
+                // secondaryBtn.className = 'col-span-1 bg-[#2a1a0a] hover:bg-[#4a2a0a] btn-active text-[#f1c40f] rounded-sm border-2 border-[#8a7a5e] flex flex-col items-center justify-center transition-all shadow-2xl';
+                // secondaryBtnContent.innerHTML = `
+                //     <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="drop-shadow-[0_0_10px_rgba(241,196,15,0.4)]"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                //     <span class="text-[9px] font-black mt-2 tracking-widest text-[#d4af37]">記録消去</span>
+                // `;
+                
             } else {
                 mainCountEl.innerText = count;
                 mainCountEl.classList.add('text-[#ffffff]', 'drop-shadow-[0_0_30px_rgba(255,255,255,0.4)]');
@@ -521,14 +673,21 @@
                 btnOverlay.className = 'absolute inset-0 opacity-20 group-hover:opacity-30 transition-opacity bg-white';
                 btnContent.innerHTML = `
                     <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="text-[#ffffff]"><path d="M14.5 17.5 3 6V3h3l11.5 11.5"/><path d="m13 19 6-6"/><path d="m16 22 5-5"/><circle cx="6" cy="18" r="3"/></svg>
-                    <span class="font-black mt-2 text-lg tracking-[0.5em] text-[#ffffff] drop-shadow-[0_2px_8px_rgba(0,0,0,1)]">SLAY</span>
+                    <span class="font-black mt-2 text-lg tracking-[0.5em] text-[#ffffff] drop-shadow-[0_2px_8px_rgba(0,0,0,1)]">討伐</span>
                 `;
 
+                // --- updateUI() 関数の中の count !== null の（else）ブロック内 ---
                 secondaryBtn.className = 'col-span-1 bg-[#3a0a0a] hover:bg-[#6a0a0a] btn-active text-[#ff5555] rounded-sm border-2 border-[#a01a1a] flex flex-col items-center justify-center transition-all shadow-2xl';
                 secondaryBtnContent.innerHTML = `
                     <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="drop-shadow-[0_0_10px_rgba(255,85,85,0.6)]"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a4 4 0 1 1 0 8h-1"/></svg>
-                    <span class="text-[9px] font-black mt-2 tracking-widest text-[#ffaaaa]">RETREAT</span>
+                    <span class="text-lg font-black mt-2 tracking-[0.3em] text-[#ffaaaa]">討伐完了</span>
                 `;
+
+                // secondaryBtn.className = 'col-span-1 bg-[#3a0a0a] hover:bg-[#6a0a0a] btn-active text-[#ff5555] rounded-sm border-2 border-[#a01a1a] flex flex-col items-center justify-center transition-all shadow-2xl';
+                // secondaryBtnContent.innerHTML = `
+                //     <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="drop-shadow-[0_0_10px_rgba(255,85,85,0.6)]"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a4 4 0 1 1 0 8h-1"/></svg>
+                //     <span class="text-[9px] font-black mt-2 tracking-widest text-[#ffaaaa]">RETREAT</span>
+                // `;
             }
             renderHistory();
         }
@@ -557,10 +716,7 @@
                     records.global.fastest = diff;
                     showGuildNotice('fast', diff); 
                 }
-                if (diff > records.global.slowest) {
-                    records.global.slowest = diff;
-                }
-
+                if (diff > records.global.slowest) records.global.slowest = diff;
                 history.unshift({ id: Date.now(), type: 'count', value: count, elapsed: `${formatDuration(diff)}`, timestamp });
             }
             saveData();
@@ -597,7 +753,7 @@
             } 
             else {
                 if (history.length > 0 || totalSlain > 0) {
-                    if (confirm("Slayer Log（討伐記録）および累計討伐数、セッション統計をすべて消去しますか？")) {
+                    if (confirm("討伐記録 および 累計討伐数、セッション統計をすべて消去しますか？")) {
                         history = [];
                         totalSlain = 0;
                         sessionTotalTime = 0;
@@ -646,19 +802,9 @@
             });
         }
 
-        function clearHistory() {
-            if (confirm("全ログ、累計討伐数、およびセッション統計を抹消しますか？")) { 
-                history = []; 
-                totalSlain = 0;
-                sessionTotalTime = 0;
-                saveData(); 
-                updateUI(); 
-                updateCreed();
-            }
-        }
 
         function resetGlobalRecords() {
-            if (confirm("殿堂（Hall of Fame）を完全にリセットしますか？")) {
+            if (confirm("「征伐の軌跡」をリセットしますか？")) {
                 records.global = { fastest: Infinity, slowest: -Infinity };
                 records.session = { fastest: Infinity, slowest: -Infinity };
                 saveData();
