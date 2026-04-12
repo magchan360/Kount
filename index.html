@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>奈落の討伐カウンター - Kount</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Noto+Serif+JP:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Noto+Serif+JP:wght@400;700;900&family=DotGothic16&display=swap" rel="stylesheet">
     <style>
         body {
             background-color: #0a0a0c;
@@ -23,7 +23,6 @@
             background-size: 32px 32px;
             z-index: -1;
         }
-
 
         /* 背景画像コンテナのスタイリング */
         .dungeon-bg-image {
@@ -63,6 +62,12 @@
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
             background: #f1c40f;
+        }
+
+        /* レトロフォント設定 */
+        .font-retro {
+            font-family: 'DotGothic16', sans-serif;
+            letter-spacing: 0.1em;
         }
 
         @keyframes pulse-red {
@@ -121,11 +126,8 @@
     <div class="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-4 gap-6 relative z-10">
         
         <!-- 左サイド：ステータスパネル -->
-
-        <!-- 左サイド：ステータスパネル -->
         <div class="lg:col-span-1 flex flex-col gap-6">
             <div class="bg-[#1a1a1f] border-2 border-[#8a7a5e] p-5 shadow-xl">
-                <!-- 「征伐の軌跡」を大きく強調 -->
                 <h3 class="text-[#d4af37] text-lg md:text-xl font-black tracking-[0.4em] uppercase mb-6 border-b-2 border-[#8a7a5e] pb-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
                     征伐の軌跡
                 </h3>
@@ -136,7 +138,6 @@
                         <div class="flex justify-between items-end mb-1">
                             <span class="text-xs text-[#f0ead6] opacity-90">最短討伐:</span>                            
                             <span id="session-fastest" class="text-base font-mono font-black text-[#55efc4] leading-none">00:00:00</span>
-
                         </div>
                         <div class="flex justify-between items-end">
                             <span class="text-xs text-[#f0ead6] opacity-90">最長討伐:</span>
@@ -144,10 +145,7 @@
                         </div>
                     </div>
 
-
-
                     <div class="pt-6 border-t-2 border-[#5c5443]">
-                        <!-- 「歴戦の断章」を大きく、かつ神々しく強調 -->
                         <p class="text-sm font-black uppercase tracking-[0.3em] mb-3 text-[#f1c40f] drop-shadow-[0_0_5px_rgba(241,196,15,0.3)]">
                             歴戦の断章
                         </p>
@@ -163,14 +161,10 @@
 
                     <button onclick="resetGlobalRecords()" 
                         class="w-full mt-4 py-3 bg-[#2a1a1a] border-2 border-[#a01a1a] text-xs md:text-sm text-[#ffaaaa] hover:bg-[#631919] hover:text-white hover:border-[#ff4d4d] transition-all uppercase tracking-[0.3em] font-black shadow-[0_0_15px_rgba(160,26,26,0.3)] group">
-                        <!-- ほんの少しだけアイコン（ゴミ箱や×印）的なニュアンスを添えても映えます -->
                         <span class="group-hover:scale-110 transition-transform inline-block">
                             全記録を灰燼に帰す
                         </span>
                     </button>
-
-
-
                 </div>
             </div>
 
@@ -180,7 +174,6 @@
                 <!-- タイトル部分を強調 -->
                 <div class="flex items-center gap-3 text-[#d4af37] border-b border-[#5c5443] pb-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                    <!-- text-xs(12px) から text-lg(18px) または text-xl(20px) へ変更 -->
                     <span class="text-lg md:text-xl font-black uppercase tracking-[0.3em] drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
                         冒険者の遺訓
                     </span>
@@ -238,9 +231,10 @@
                             　
                         </div>
 
-                        <div id="status-indicator" class="hidden-element mt-8 flex items-center justify-center gap-6 text-[#ff5555] font-black text-2xl md:text-3xl tracking-[0.5em] uppercase animate-pulse-abyss drop-shadow-[0_0_15px_rgba(255,85,85,0.8)]">
+                        <!-- 画面中央のタイマーカウント表示 -->
+                        <div id="status-indicator" class="hidden-element mt-8 flex items-center justify-center gap-6 text-[#ff5555] font-black text-2xl md:text-3xl tracking-[0.5em] uppercase animate-pulse-abyss drop-shadow-[0_0_15px_rgba(255,85,85,0.8)] font-retro">
                             <div class="w-4 h-4 bg-[#ff5555] rounded-full shadow-[0_0_20px_#ff5555]"></div>
-                            <span>カウント記録中</span>
+                            <span id="live-timer">00:00:00</span>
                             <div class="w-4 h-4 bg-[#ff5555] rounded-full shadow-[0_0_20px_#ff5555]"></div>
                         </div>
 
@@ -258,7 +252,7 @@
                         <button id="secondary-btn" onclick="resetAndSave()" class="col-span-1 bg-[#221111] hover:bg-[#441111] btn-active text-[#ff5555] rounded-sm border-2 border-[#a01a1a] flex flex-col items-center justify-center transition-all shadow-xl">
                             <div id="secondary-btn-content" class="flex flex-col items-center">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="drop-shadow-[0_0_10px_rgba(255,85,85,0.6)]"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a4 4 0 1 1 0 8h-1"/></svg>
-                                <span class="text-[9px] font-black mt-2 tracking-widest text-[#ffaaaa]">RETREAT</span>
+                                <span class="text-lg font-black mt-2 tracking-[0.3em] text-[#ffaaaa]">帰還</span>
                             </div>
                         </button>
                     </div>
@@ -442,6 +436,7 @@
         let lastCountTime = null;
         let totalSlayingTime = 0; // 現在のバトルの合計
         let sessionTotalTime = 0; // 全バトルの累計合計時間
+		let liveTimerInterval = null; // リアルタイム更新用
 
         let records = {
             session: { fastest: Infinity, slowest: -Infinity },
@@ -450,6 +445,7 @@
 
         const mainCountEl = document.getElementById('main-count');
         const statusIndicator = document.getElementById('status-indicator');
+        const liveTimerEl = document.getElementById('live-timer');
         const actionBtn = document.getElementById('action-btn');
         const secondaryBtn = document.getElementById('secondary-btn');
         const secondaryBtnContent = document.getElementById('secondary-btn-content');
@@ -602,6 +598,14 @@
             return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
         }
 
+        // リアルタイムタイマー更新
+        function updateLiveTimer() {
+            if (!lastCountTime) return;
+            const now = new Date();
+            const elapsed = now - lastCountTime;
+            liveTimerEl.innerText = formatDuration(elapsed);
+        }
+
         function showGuildNotice(type, value) {
             const notice = document.createElement('div');
             notice.className = 'guild-notice bg-[#1a1a1f] border-l-4 border-[#f1c40f] p-4 shadow-2xl min-w-[240px] pointer-events-auto';
@@ -647,8 +651,8 @@
 
             if (count === null) {
                 mainCountEl.innerText = '　';
-                mainCountEl.classList.remove('text-[#ffffff]', 'drop-shadow-[0_0_30px_rgba(255,255,255,0.4)]');
                 mainCountEl.classList.add('text-[#1a1a1f]');
+                mainCountEl.classList.remove('text-[#ffffff]', 'drop-shadow-[0_0_30px_rgba(255,255,255,0.4)]');
                 statusIndicator.classList.add('hidden-element');
                 
                 actionBtn.className = 'col-span-3 relative group btn-active transition-all py-8 rounded-sm overflow-hidden border-2 shadow-[0_10px_30px_rgba(0,0,0,0.8)] border-[#55efc4] bg-[#1a4a3a]';
@@ -689,7 +693,7 @@
                 secondaryBtn.className = 'col-span-1 bg-[#3a0a0a] hover:bg-[#6a0a0a] btn-active text-[#ff5555] rounded-sm border-2 border-[#a01a1a] flex flex-col items-center justify-center transition-all shadow-2xl';
                 secondaryBtnContent.innerHTML = `
                     <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="drop-shadow-[0_0_10px_rgba(255,85,85,0.6)]"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a4 4 0 1 1 0 8h-1"/></svg>
-                    <span class="text-lg font-black mt-2 tracking-[0.3em] text-[#ffaaaa]">討伐完了</span>
+                    <span class="text-lg font-black mt-2 tracking-[0.3em] text-[#ffaaaa]">帰還</span>
                 `;
 
                 // secondaryBtn.className = 'col-span-1 bg-[#3a0a0a] hover:bg-[#6a0a0a] btn-active text-[#ff5555] rounded-sm border-2 border-[#a01a1a] flex flex-col items-center justify-center transition-all shadow-2xl';
@@ -709,8 +713,14 @@
 
             if (count === null) {
                 records.session = { fastest: Infinity, slowest: -Infinity };
-                count = 0; lastCountTime = now; totalSlayingTime = 0;
+                count = 0; 
+                lastCountTime = now; 
+                totalSlayingTime = 0;
                 history.unshift({ id: Date.now(), type: 'start', value: '---', elapsed: "出発", timestamp });
+                
+                // タイマー開始
+                liveTimerEl.innerText = "00:00:00";
+                liveTimerInterval = setInterval(updateLiveTimer, 1000);
             } else {
                 const diff = now - lastCountTime;
                 count++; 
@@ -727,6 +737,9 @@
                 }
                 if (diff > records.global.slowest) records.global.slowest = diff;
                 history.unshift({ id: Date.now(), type: 'count', value: count, elapsed: `${formatDuration(diff)}`, timestamp });
+                
+                // 次のカウントに向けて表示をリセット（即座に反応した感を出すため）
+                liveTimerEl.innerText = "00:00:00";
             }
             saveData();
             updateRecordUI();
@@ -759,6 +772,10 @@
                 count = null; 
                 lastCountTime = null; 
                 totalSlayingTime = 0;
+                
+                // タイマー停止
+                clearInterval(liveTimerInterval);
+                liveTimerInterval = null;
             } 
             else {
                 if (history.length > 0 || totalSlain > 0) {
