@@ -854,6 +854,22 @@
             titleEditContainer.classList.add('hidden-element');
         }
 
+
+        // 全てのボタンに対して、クリック後にフォーカスを外す処理を追加
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                btn.blur();
+            });
+        });
+
+        window.addEventListener('keydown', function(e) {
+            // 押されたのがスペースキーで、かつ入力フォーム(input)を操作していない場合
+            if (e.code === 'Space' && e.target.tagName !== 'INPUT') {
+                e.preventDefault(); // ボタン押下などのデフォルト動作を阻止
+            }
+        });
+
+
         loadData();
     </script>
 </body>
