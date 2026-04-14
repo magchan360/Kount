@@ -590,18 +590,18 @@
         }
 
         function formatDuration(ms) {
-            // Infinity（初期値）の場合は「--:--:--」を表示して区別する
-            if (ms === Infinity || ms === -Infinity || ms === null || isNaN(ms)) return "--:--:--";
+            // 未記録（Infinity / -Infinity）や無効な値の場合はハイフンを表示
+            if (ms === Infinity || ms === -Infinity || ms === null || isNaN(ms) || ms < 0) {
+                return "--:--:--";
+            }
             
             const totalSeconds = Math.floor(ms / 1000);
-            // もし1秒未満でも記録として残したい場合は、最低1秒とみなすか、
-            // 内部ロジックで「0秒（連打）」を弾くようにします。
-            
             const hours = Math.floor(totalSeconds / 3600);
             const minutes = Math.floor((totalSeconds % 3600) / 60);
             const seconds = totalSeconds % 60;
             return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
         }
+
 
         // リアルタイムタイマー更新
         function updateLiveTimer() {
@@ -651,7 +651,9 @@
             
             // 全体統計の表示更新
             sessionTotalTimeEl.innerText = formatDuration(sessionTotalTime);
-            const avgTime = totalSlain > 0 ? (sessionTotalTime / totalSlain) : 0;
+            
+            // 平均時間の計算を安全に（未討伐なら 0 ではなく null扱いに）
+            const avgTime = (totalSlain > 0) ? (sessionTotalTime / totalSlain) : null;
             sessionAvgTimeEl.innerText = formatDuration(avgTime);
 
             if (count === null) {
@@ -710,54 +712,51 @@
             renderHistory();
         }
 
+
         function handleAction() {
             const now = new Date();
-            const diff = now - lastCountTime;
             const timestamp = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-            // 500ms(0.5秒)未満の記録は、最速記録として更新しない（連打対策）
-            // あるいは diff > 0 の条件を厳格にする
-            if (diff > 500 && diff < records.global.fastest) {
-                records.global.fastest = diff;
-                showGuildNotice('fast', diff); 
-            }
-            
-            updateCreed(); 
-
             if (count === null) {
+                // 【開始時】
                 records.session = { fastest: Infinity, slowest: -Infinity };
                 count = 0; 
                 lastCountTime = now; 
                 totalSlayingTime = 0;
                 history.unshift({ id: Date.now(), type: 'start', value: '---', elapsed: "出発", timestamp });
                 
-                // タイマー開始
                 liveTimerEl.innerText = "00:00:00";
+                clearInterval(liveTimerInterval);
                 liveTimerInterval = setInterval(updateLiveTimer, 1000);
             } else {
+                // 【討伐時】
                 const diff = now - lastCountTime;
                 count++; 
                 totalSlain++; 
                 lastCountTime = now;
                 totalSlayingTime += diff;
 
+                // セッション記録の更新
                 if (diff < records.session.fastest) records.session.fastest = diff;
                 if (diff > records.session.slowest) records.session.slowest = diff;
 
-                if (diff < records.global.fastest) {
+                // グローバル（歴代）記録の更新
+                // 最初の1回（記録がInfinity）または、今回の記録が過去最短より短い場合
+                if (records.global.fastest === Infinity || (diff > 500 && diff < records.global.fastest)) {
                     records.global.fastest = diff;
                     showGuildNotice('fast', diff); 
                 }
                 if (diff > records.global.slowest) records.global.slowest = diff;
+
                 history.unshift({ id: Date.now(), type: 'count', value: count, elapsed: `${formatDuration(diff)}`, timestamp });
-                
-                // 次のカウントに向けて表示をリセット（即座に反応した感を出すため）
                 liveTimerEl.innerText = "00:00:00";
+                updateCreed(); 
             }
             saveData();
             updateRecordUI();
             updateUI();
         }
+
 
         function resetAndSave() {
             updateCreed(); 
