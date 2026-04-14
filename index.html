@@ -137,7 +137,7 @@
                         <p class="text-sm font-black uppercase tracking-[0.3em] mb-3 text-[#f1c40f] drop-shadow-[0_0_5px_rgba(241,196,15,0.3)]">現在の記録</p>
                         <div class="flex justify-between items-end mb-1">
                             <span class="text-xs text-[#f0ead6] opacity-90">最短討伐:</span>                            
-                            <span id="session-fastest" class="text-base font-mono font-black text-[#55efc4] leading-none">00:00:00</span>
+                            <span id="session-fastest" class="text-base font-mono font-black text-[#55efc4] leading-none">--:--:--</span>
                         </div>
                         <div class="flex justify-between items-end">
                             <span class="text-xs text-[#f0ead6] opacity-90">最長討伐:</span>
@@ -590,8 +590,13 @@
         }
 
         function formatDuration(ms) {
-            if (ms === Infinity || ms === -Infinity || ms === null || isNaN(ms)) return "00:00:00";
+            // Infinity（初期値）の場合は「--:--:--」を表示して区別する
+            if (ms === Infinity || ms === -Infinity || ms === null || isNaN(ms)) return "--:--:--";
+            
             const totalSeconds = Math.floor(ms / 1000);
+            // もし1秒未満でも記録として残したい場合は、最低1秒とみなすか、
+            // 内部ロジックで「0秒（連打）」を弾くようにします。
+            
             const hours = Math.floor(totalSeconds / 3600);
             const minutes = Math.floor((totalSeconds % 3600) / 60);
             const seconds = totalSeconds % 60;
@@ -707,7 +712,15 @@
 
         function handleAction() {
             const now = new Date();
+            const diff = now - lastCountTime;
             const timestamp = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+            // 500ms(0.5秒)未満の記録は、最速記録として更新しない（連打対策）
+            // あるいは diff > 0 の条件を厳格にする
+            if (diff > 500 && diff < records.global.fastest) {
+                records.global.fastest = diff;
+                showGuildNotice('fast', diff); 
+            }
             
             updateCreed(); 
 
