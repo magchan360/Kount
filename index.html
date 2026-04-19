@@ -715,6 +715,12 @@
 
         function handleAction() {
             const now = new Date();
+            
+            // 連打防止（討伐中で、前回のカウントから500ms経過していない場合は無視）
+            if (count !== null && (now - lastCountTime) < 2000) {
+                return; 
+            }
+
             const timestamp = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
             if (count === null) {
@@ -735,6 +741,8 @@
                 totalSlain++; 
                 lastCountTime = now;
                 totalSlayingTime += diff;
+                // 総討伐時間は、帰還時ではなく討伐時（handleAction）に加算し、帰還時には加算しないように変更(2026/04/19)
+                sessionTotalTime += diff; // ★ ここで総時間に都度加算する
 
                 // セッション記録の更新
                 if (diff < records.session.fastest) records.session.fastest = diff;
@@ -742,7 +750,7 @@
 
                 // グローバル（歴代）記録の更新
                 // 最初の1回（記録がInfinity）または、今回の記録が過去最短より短い場合
-                if (records.global.fastest === Infinity || (diff > 500 && diff < records.global.fastest)) {
+                if (records.global.fastest === Infinity || (diff < records.global.fastest)) {
                     records.global.fastest = diff;
                     showGuildNotice('fast', diff); 
                 }
@@ -766,11 +774,12 @@
                 const timestamp = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
                 
                 // バトルの最終ラグを加算
-                const finalDiff = now - lastCountTime;
-                totalSlayingTime += finalDiff;
+                // const finalDiff = now - lastCountTime;   変更(2026/04/19)
+                // totalSlayingTime += finalDiff;           変更(2026/04/19)
                 
                 // セッション累計時間に加算
-                sessionTotalTime += totalSlayingTime;
+                // sessionTotalTime += totalSlayingTime;    変更(2026/04/19)
+
 
                 history.unshift({ 
                     id: Date.now(), 
