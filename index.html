@@ -773,32 +773,42 @@
                 const now = new Date();
                 const timestamp = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
                 
-                // バトルの最終ラグを加算
-                // const finalDiff = now - lastCountTime;   変更(2026/04/19)
-                // totalSlayingTime += finalDiff;           変更(2026/04/19)
-                
-                // セッション累計時間に加算
-                // sessionTotalTime += totalSlayingTime;    変更(2026/04/19)
+                let displayTime;
+                let timeLabel;
 
+                if (count === 0) {
+                    // 【討伐数 0 の場合】
+                    // 出発から「今（帰還ボタン）」までの時間を滞在時間として計算
+                    displayTime = now - lastCountTime;
+                    timeLabel = "滞在時間";
+                    
+                    // ※ 右上の「総討伐時間」には加算しない（04/19のルール：討伐時のみ加算を維持）
+                } else {
+                    // 【討伐数 1 以上の場合】
+                    // 最後の討伐時に確定している totalSlayingTime（ロスタイムなし）をそのまま使用
+                    displayTime = totalSlayingTime;
+                    timeLabel = "討伐合計時間";
+                }
 
                 history.unshift({ 
                     id: Date.now(), 
                     type: 'reset', 
                     value: count, 
-                    elapsed: `討伐合計時間: ${formatDuration(totalSlayingTime)}`, 
+                    elapsed: `${timeLabel}: ${formatDuration(displayTime)}`, 
                     timestamp, 
                     isSummary: true 
                 });
                 
+                // カウントやタイマーのリセット
                 count = null; 
                 lastCountTime = null; 
                 totalSlayingTime = 0;
                 
-                // タイマー停止
                 clearInterval(liveTimerInterval);
                 liveTimerInterval = null;
             } 
             else {
+                // (省略：履歴削除の確認ダイアログなど)
                 if (history.length > 0 || totalSlain > 0) {
                     if (confirm("討伐記録 および 累計討伐数、セッション統計をすべて消去しますか？")) {
                         history = [];
@@ -815,6 +825,7 @@
             updateUI();
         }
 
+
         function renderHistory() {
             Array.from(historyList.children).forEach(child => { if (child.id !== 'empty-history') child.remove(); });
             if (history.length === 0) { emptyHistory.classList.remove('hidden-element'); return; }
@@ -827,8 +838,16 @@
                 }`;
                 const badge = item.isSummary ? '<span class=\"text-[10px] bg-[#ff5555] text-white px-2 py-0.5 rounded-sm font-black uppercase\">帰還</span>' : item.type === 'start' ? '<span class=\"text-[10px] bg-[#55efc4] text-[#0a2a1a] px-2 py-0.5 rounded-sm font-black uppercase\">出発</span>' : '';
                 
-                const titleText = item.isSummary ? '討伐完了' : item.type === 'start' ? '討伐開始' : `討伐${item.value}体目`;
-                const titleColor = item.isSummary ? 'text-[#ffcccc]' : item.type === 'start' ? 'text-[#a2ffd0]' : 'text-[#ffffff]';
+                // const titleText = item.isSummary ? '討伐完了' : item.type === 'start' ? '討伐開始' : `討伐${item.value}体目`;
+                // item.isSummary の時、さらに count(item.value) が 0 より大きいかで判定
+                const titleText = item.isSummary 
+                    ? (item.value > 0 ? '討伐完了' : '討伐失敗') 
+                    : item.type === 'start' ? '討伐開始' : `討伐${item.value}体目`;
+                
+                // const titleColor = item.isSummary ? 'text-[#ffcccc]' : item.type === 'start' ? 'text-[#a2ffd0]' : 'text-[#ffffff]';
+                const titleColor = item.isSummary 
+                    ? (item.value > 0 ? 'text-[#ffcccc]' : 'text-[#9ca3af]') // 失敗時はグレーっぽく
+                    : item.type === 'start' ? 'text-[#a2ffd0]' : 'text-[#ffffff]';
                 const valueColor = item.isSummary ? 'text-[#ff5555]' : item.type === 'start' ? 'text-[#55efc4]' : 'text-[#f1c40f]';
 
                 div.innerHTML = `
